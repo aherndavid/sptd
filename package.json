@@ -1,0 +1,13 @@
+{
+  "name": "sptd",
+  "version": "1.0.0",
+  "description": "SPTD car spotting app - www.sptd.uk",
+  "scripts": {
+    "build": "tailwindcss -i ./src/input.css -o ./styles.css --minify",
+    "dev": "tailwindcss -i ./src/input.css -o ./styles.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  },
+  "private": true
+}

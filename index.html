@@ -40,7 +40,7 @@
                     </div>
                     <p id="login-error" class="hidden text-sm text-red-400" role="alert"></p>
                     <button id="login-btn" type="submit" class="w-full bg-slate-100 text-slate-900 font-bold text-lg rounded-xl px-4 py-3 hover:bg-white active:scale-95 transition-transform flex justify-center items-center gap-2 disabled:opacity-60 disabled:pointer-events-none">
-                        <i class="ph ph-magic-wand text-xl"></i> <span id="login-btn-label">Send magic link</span>
+                        <span id="login-btn-label">Send code</span>
                     </button>
                 </form>
 
@@ -48,7 +48,14 @@
                 <div id="login-sent" class="hidden w-full text-center" role="status">
                     <i class="ph ph-envelope-simple-open text-5xl text-neon-blue mb-4"></i>
                     <h2 class="text-xl font-bold mb-2">Check your email</h2>
-                    <p class="text-sm text-slate-400 mb-6">We sent a sign-in link to <span id="login-sent-email" class="text-slate-200 font-medium"></span>. Open it on this device to sign in.</p>
+                    <p class="text-sm text-slate-400 mb-6">We sent a sign-in code to <span id="login-sent-email" class="text-slate-200 font-medium"></span>. Enter it below.</p>
+
+                    <div class="space-y-4 mb-6">
+                        <input id="otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Enter code" class="w-full text-center bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-blue focus:ring-1 focus:ring-neon-blue transition-all">
+                        <p id="otp-error" class="hidden text-sm text-red-400" role="alert"></p>
+                        <button id="verify" type="button" class="w-full bg-slate-100 text-slate-900 font-bold text-lg rounded-xl px-4 py-3 hover:bg-white active:scale-95 transition-transform flex justify-center items-center gap-2 disabled:opacity-60 disabled:pointer-events-none">Sign in</button>
+                    </div>
+
                     <button id="login-retry" type="button" class="text-sm text-neon-blue font-semibold hover:underline">Use a different email</button>
                 </div>
                 
@@ -443,7 +450,7 @@
             });
 
             loginBtn.disabled = false;
-            loginBtnLabel.textContent = 'Send magic link';
+            loginBtnLabel.textContent = 'Send code';
 
             if (error) {
                 loginError.textContent = error.status === 429
@@ -458,10 +465,44 @@
             show(loginSent);
         });
 
+        const otpInput = document.getElementById('otp');
+        const otpError = document.getElementById('otp-error');
+        const verifyBtn = document.getElementById('verify');
+
         document.getElementById('login-retry').addEventListener('click', () => {
+            otpInput.value = '';
+            hide(otpError);
             hide(loginSent);
             show(loginForm);
             loginEmail.focus();
+        });
+
+        verifyBtn.addEventListener('click', async () => {
+            const token = otpInput.value.trim();
+            hide(otpError);
+            if (!token) {
+                otpError.textContent = 'Enter the code from your email.';
+                show(otpError);
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Checking...';
+
+            const { error } = await sb.auth.verifyOtp({
+                email: loginEmail.value.trim(),
+                token,
+                type: 'email'
+            });
+
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = 'Sign in';
+
+            if (error) {
+                otpError.textContent = 'That code is invalid or has expired.';
+                show(otpError);
+            }
+            // On success, onAuthStateChange calls enterApp()
         });
 
         function enterApp(user) {
